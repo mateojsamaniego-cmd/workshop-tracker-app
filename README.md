@@ -15,7 +15,7 @@ Aplicación web simple para un taller de mecánica. El personal registra órdene
 | Base de datos | PostgreSQL en Supabase |
 | Autenticación | Supabase Auth (correo y contraseña, registro público desactivado) |
 | Fotos | Supabase Storage (bucket `fotos`) |
-| Hosting | Cloudflare Pages (despliegue automático desde GitHub) |
+| Hosting | Cloudflare Workers (assets estáticos; despliegue automático desde GitHub) |
 | Control de versiones | Git + GitHub |
 
 **Requisitos locales**
@@ -27,7 +27,7 @@ Aplicación web simple para un taller de mecánica. El personal registra órdene
 **Entornos**
 - `local`: `npm run dev` en tu máquina, conectado al proyecto de Supabase de desarrollo.
 - `preview`: Cloudflare genera una URL de prueba por cada rama.
-- `producción`: rama `main` desplegada en Cloudflare Pages.
+- `producción`: rama `main` desplegada en Cloudflare Workers.
 
 > Recomendado: usar **dos proyectos de Supabase** (uno `dev` y otro `prod`) apenas haya datos reales. Mientras tanto, nunca hacer pruebas destructivas sobre datos de clientes reales.
 
@@ -38,7 +38,7 @@ Aplicación web simple para un taller de mecánica. El personal registra órdene
 ```
 taller-app/
 ├── public/
-│   └── _redirects          # Reglas de rutas para Cloudflare (SPA)
+├── wrangler.jsonc          # Configuración de Cloudflare (carpeta dist + modo SPA)
 ├── src/
 │   ├── lib/supabase.js     # Cliente de Supabase (único lugar donde se crea)
 │   ├── pages/              # Pantallas (Login, Ordenes, Detalle, Seguimiento)
@@ -89,7 +89,7 @@ VITE_SUPABASE_ANON_KEY=
 ```
 
 - Las variables `VITE_*` quedan **visibles en el navegador**. Por eso solo se usa la `anon key`.
-- En Cloudflare Pages se cargan en *Settings → Environment variables*.
+- En Cloudflare se cargan en *Settings → Variables and Secrets* (sección Build).
 
 ---
 
@@ -162,13 +162,13 @@ Reglas adicionales:
 
 1. Subir el cambio a una rama y revisar el *preview* de Cloudflare.
 2. Fusionar a `main` mediante Pull Request.
-3. Cloudflare Pages despliega automáticamente.
+3. Cloudflare despliega automáticamente.
 4. Si se cambió la base de datos, ejecutar primero el SQL de `db/migrations/` en Supabase y luego fusionar.
 5. Verificar en producción: login, crear orden, subir foto y abrir el enlace público desde un celular.
 
-Configuración en Cloudflare Pages:
+Configuración en Cloudflare Workers:
 - Build command: `npm run build`
-- Output directory: `dist`
+- Deploy command: `npx wrangler deploy` (la carpeta `dist` se define en `wrangler.jsonc`)
 - Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 En Supabase → Authentication → URL Configuration: registrar la URL de producción como *Site URL*.

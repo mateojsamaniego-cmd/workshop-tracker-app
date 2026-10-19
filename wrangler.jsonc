@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Debe coincidir con el nombre del Worker en el panel de Cloudflare
+  "name": "workshop-tracker-app",
+  "compatibility_date": "2026-10-18",
+  "assets": {
+    "directory": "./dist",
+    // SPA: cualquier ruta (ej. /seguimiento/abc) devuelve index.html y React Router decide
+    "not_found_handling": "single-page-application"
+  }
+}
