@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { STATUSES } from '../lib/orderStatus'
 import { formatDateOnly, formatDateTime } from '../lib/format'
+import { buildTimeline } from '../lib/timeline'
 import StatusPill from '../components/StatusPill'
+import Timeline from '../components/Timeline'
+import PhotoViewer from '../components/PhotoViewer'
 import { PageTitle, PropertyRow, SectionLabel } from '../components/PageUI'
 import { IconCalendar, IconCar, IconCheck, IconClock, IconStatus } from '../components/icons'
 
@@ -20,6 +23,7 @@ export default function Tracking() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [viewing, setViewing] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -109,27 +113,24 @@ export default function Tracking() {
           <SectionLabel>Fotos</SectionLabel>
           <div className="mt-1 grid grid-cols-3 gap-1.5">
             {order.photos.map((p) => (
-              <a key={p.storage_path} href={photoUrl(p.storage_path)} target="_blank" rel="noreferrer">
-                <img src={photoUrl(p.storage_path)} alt="Foto del trabajo" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
-              </a>
+              <button key={p.storage_path} type="button" onClick={() => setViewing(p)} aria-label="Ver foto y descripción">
+                <img src={photoUrl(p.storage_path)} alt={p.description || 'Foto del trabajo'} loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {order.notes.length > 0 && (
-        <div className="mt-8">
-          <SectionLabel>Novedades</SectionLabel>
-          <ul>
-            {[...order.notes].reverse().map((n) => (
-              <li key={n.created_at} className="py-3">
-                <p className="text-body text-black/90">{n.body}</p>
-                <p className="mt-0.5 text-caption text-black/40">{formatDateTime(n.created_at)}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <div className="mt-8">
+        <SectionLabel>Línea de tiempo</SectionLabel>
+        <Timeline
+          items={buildTimeline({ history: order.history ?? [], notes: order.notes, photos: order.photos })}
+          photoUrl={photoUrl}
+          onPhotoClick={setViewing}
+        />
+      </div>
+
+      <PhotoViewer photo={viewing} photoUrl={photoUrl} onClose={() => setViewing(null)} />
     </>,
   )
 }

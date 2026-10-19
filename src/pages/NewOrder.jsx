@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { bareInputClass } from '../lib/styles'
+import { todayISO } from '../lib/format'
 import { PageTopBar, PropertyRow } from '../components/PageUI'
 import { IconCalendar, IconCar, IconPage, IconPhone, IconUser } from '../components/icons'
 
@@ -21,8 +22,10 @@ export default function NewOrder() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  function setField(name) {
-    return (event) => setForm((prev) => ({ ...prev, [name]: event.target.value }))
+  const today = todayISO()
+
+  function setField(name, transform = (v) => v) {
+    return (event) => setForm((prev) => ({ ...prev, [name]: transform(event.target.value) }))
   }
 
   async function handleSubmit(event) {
@@ -30,7 +33,7 @@ export default function NewOrder() {
     setError('')
 
     const plate = form.plate.trim().toUpperCase()
-    const clientName = form.client_name.trim()
+    const clientName = form.client_name.trim().toUpperCase()
     const vehicle = form.vehicle.trim()
     const phone = form.client_phone.trim()
 
@@ -38,8 +41,13 @@ export default function NewOrder() {
       setError('La placa, el cliente y el vehículo son obligatorios.')
       return
     }
-    if (phone && !/^[0-9+\s-]{7,15}$/.test(phone)) {
-      setError('El teléfono solo puede tener números, espacios, + o guiones.')
+    if (phone && !/^\d{10}$/.test(phone)) {
+      setError('El celular debe tener exactamente 10 dígitos (ej. 0991234567).')
+      return
+    }
+    // Las fechas YYYY-MM-DD se pueden comparar como texto
+    if (form.estimated_delivery && form.estimated_delivery < today) {
+      setError('La fecha de entrega no puede ser anterior a hoy.')
       return
     }
 
@@ -99,16 +107,32 @@ export default function NewOrder() {
 
         <div className="mt-4">
           <PropertyRow icon={<IconUser size={18} />} label="Cliente">
-            <input value={form.client_name} onChange={setField('client_name')} placeholder="Vacío" aria-label="Nombre del cliente" className={bareInputClass} />
+            <input
+              value={form.client_name}
+              onChange={setField('client_name', (v) => v.toUpperCase())}
+              placeholder="Vacío"
+              aria-label="Nombre del cliente"
+              autoCapitalize="characters"
+              className={bareInputClass}
+            />
           </PropertyRow>
-          <PropertyRow icon={<IconPhone size={18} />} label="Teléfono">
-            <input type="tel" inputMode="tel" value={form.client_phone} onChange={setField('client_phone')} placeholder="0991234567" aria-label="Teléfono" className={bareInputClass} />
+          <PropertyRow icon={<IconPhone size={18} />} label="Celular">
+            <input
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              value={form.client_phone}
+              onChange={setField('client_phone', (v) => v.replace(/\D/g, '').slice(0, 10))}
+              placeholder="0991234567"
+              aria-label="Celular (10 dígitos)"
+              className={bareInputClass}
+            />
           </PropertyRow>
           <PropertyRow icon={<IconCar size={18} />} label="Vehículo">
             <input value={form.vehicle} onChange={setField('vehicle')} placeholder="Chevrolet Sail 2018" aria-label="Vehículo" className={bareInputClass} />
           </PropertyRow>
           <PropertyRow icon={<IconCalendar size={18} />} label="Entrega">
-            <input type="date" value={form.estimated_delivery} onChange={setField('estimated_delivery')} aria-label="Fecha estimada de entrega" className={bareInputClass} />
+            <input type="date" min={today} value={form.estimated_delivery} onChange={setField('estimated_delivery')} aria-label="Fecha estimada de entrega" className={bareInputClass} />
           </PropertyRow>
         </div>
 

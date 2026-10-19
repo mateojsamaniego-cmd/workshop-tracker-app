@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { STATUSES, getStatus } from '../lib/orderStatus'
-import { formatDate, formatDateOnly, formatDateTime } from '../lib/format'
+import { formatDate, formatDateOnly } from '../lib/format'
 import { buildWhatsappUrl } from '../lib/whatsapp'
 import { compressImage } from '../lib/imageCompress'
 import { randomId } from '../lib/randomId'
-import { floatCircleClass, floatPillClass } from '../lib/styles'
+import { buildTimeline } from '../lib/timeline'
+import { floatCircleClass, floatPillClass, outlineButtonClass, primaryButtonClass } from '../lib/styles'
 import StatusPill from '../components/StatusPill'
+import Sheet from '../components/Sheet'
+import PhotoViewer from '../components/PhotoViewer'
+import Timeline from '../components/Timeline'
 import Popover, { MenuItem } from '../components/Popover'
 import { PageTitle, PageTopBar, PropertyRow, SectionLabel } from '../components/PageUI'
 import {
@@ -37,6 +41,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null)
   const [notes, setNotes] = useState([])
   const [photos, setPhotos] = useState([])
+  const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -46,21 +51,28 @@ export default function OrderDetail() {
   const [noteVisible, setNoteVisible] = useState(true)
   const [savingNote, setSavingNote] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Foto elegida que espera su descripción antes de subirse
+  const [pendingPhoto, setPendingPhoto] = useState(null) // { file, preview }
+  const [photoDescription, setPhotoDescription] = useState('')
+  const [photoError, setPhotoError] = useState('')
+  const [viewing, setViewing] = useState(null)
 
   useEffect(() => {
     async function load() {
-      const [orderRes, notesRes, photosRes] = await Promise.all([
+      const [orderRes, notesRes, photosRes, historyRes] = await Promise.all([
         supabase.from('orders').select('*').eq('id', id).maybeSingle(),
         supabase.from('order_notes').select('*').eq('order_id', id).order('created_at', { ascending: false }),
         supabase.from('order_photos').select('*').eq('order_id', id).order('created_at', { ascending: true }),
+        supabase.from('order_status_history').select('status, changed_at').eq('order_id', id).order('changed_at', { ascending: true }),
       ])
 
-      if (orderRes.error || notesRes.error || photosRes.error) {
+      if (orderRes.error || notesRes.error || photosRes.error || historyRes.error) {
         setError('No se pudo cargar la orden. Intenta de nuevo.')
       } else {
         setOrder(orderRes.data)
         setNotes(notesRes.data)
         setPhotos(photosRes.data)
+        setHistory(historyRes.data)
       }
       setLoading(false)
     }
@@ -76,8 +88,18 @@ export default function OrderDetail() {
     setMenu(null)
     if (status === order.status) return
     const { error: updateError } = await supabase.from('orders').update({ status }).eq('id', id)
-    if (updateError) flash('No se pudo cambiar el estado.')
-    else setOrder((prev) => ({ ...prev, status }))
+    if (updateError) {
+      flash('No se pudo cambiar el estado.')
+      return
+    }
+    setOrder((prev) => ({ ...prev, status }))
+    // El historial lo registra un trigger en la base; se vuelve a leer para la línea de tiempo
+    const { data } = await supabase
+      .from('order_status_history')
+      .select('status, changed_at')
+      .eq('order_id', id)
+      .order('changed_at', { ascending: true })
+    if (data) setHistory(data)
   }
 
   async function addNote(event) {
@@ -100,14 +122,34 @@ export default function OrderDetail() {
     setNoteVisible(true)
   }
 
-  async function uploadPhoto(event) {
+  // Paso 1: elegir la foto -> se abre la hoja para describir lo realizado
+  function pickPhoto(event) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    setPhotoDescription('')
+    setPhotoError('')
+    setPendingPhoto({ file, preview: URL.createObjectURL(file) })
+  }
+
+  function closePendingPhoto() {
+    if (pendingPhoto) URL.revokeObjectURL(pendingPhoto.preview)
+    setPendingPhoto(null)
+  }
+
+  // Paso 2: con la descripción escrita, se comprime y se sube
+  async function savePhoto(event) {
+    event.preventDefault()
+    const description = photoDescription.trim()
+    if (!description) {
+      setPhotoError('Describe las actividades realizadas antes de guardar.')
+      return
+    }
 
     setUploading(true)
+    setPhotoError('')
     try {
-      const blob = await compressImage(file)
+      const blob = await compressImage(pendingPhoto.file)
       // Nombre aleatorio: la URL de la foto no se puede adivinar
       const path = `${id}/${randomId()}.jpg`
       const { error: uploadError } = await supabase.storage
@@ -117,13 +159,15 @@ export default function OrderDetail() {
 
       const { data, error: insertError } = await supabase
         .from('order_photos')
-        .insert({ order_id: id, storage_path: path })
+        .insert({ order_id: id, storage_path: path, description })
         .select()
         .single()
       if (insertError) throw new Error('La foto se subió pero no se pudo registrar.')
       setPhotos((prev) => [...prev, data])
+      closePendingPhoto()
+      flash('Foto guardada')
     } catch (err) {
-      flash(err.message)
+      setPhotoError(err.message)
     } finally {
       setUploading(false)
     }
@@ -252,39 +296,63 @@ export default function OrderDetail() {
         <div className="mt-8">
           <SectionLabel>Fotos</SectionLabel>
           {photos.length === 0 ? (
-            <p className="py-2 text-body-sm text-black/40">Aún no hay fotos. Usa la cámara de abajo.</p>
+            <p className="py-2 text-body-sm text-black/40">Aún no hay fotos. Usa la cámara de abajo para registrar un avance.</p>
           ) : (
             <div className="mt-1 grid grid-cols-3 gap-1.5">
               {photos.map((p) => (
-                <a key={p.id} href={photoUrl(p.storage_path)} target="_blank" rel="noreferrer">
-                  <img src={photoUrl(p.storage_path)} alt="Foto de la orden" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
-                </a>
+                <button key={p.id} type="button" onClick={() => setViewing(p)} aria-label="Ver foto y descripción">
+                  <img src={photoUrl(p.storage_path)} alt={p.description || 'Foto de la orden'} loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+                </button>
               ))}
             </div>
           )}
         </div>
 
         <div className="mt-8">
-          <SectionLabel>Notas</SectionLabel>
-          {notes.length === 0 ? (
-            <p className="py-2 text-body-sm text-black/40">Aún no hay notas.</p>
-          ) : (
-            <ul>
-              {notes.map((n) => (
-                <li key={n.id} className="flex gap-4 py-3">
-                  <span className="pt-0.5 text-black/40">{n.visible_to_client ? <IconChat size={20} /> : <IconLock size={20} />}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-body text-black/90">{n.body}</p>
-                    <p className="mt-0.5 text-caption text-black/40">
-                      {formatDateTime(n.created_at)} · {n.visible_to_client ? 'Visible al cliente' : 'Solo interna'}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <SectionLabel>Línea de tiempo</SectionLabel>
+          <Timeline
+            items={buildTimeline({ history, notes, photos })}
+            photoUrl={photoUrl}
+            onPhotoClick={setViewing}
+            showVisibility
+          />
         </div>
       </main>
+
+      <PhotoViewer photo={viewing} photoUrl={photoUrl} onClose={() => setViewing(null)} />
+
+      {/* Paso obligatorio: describir lo realizado antes de subir la foto */}
+      <Sheet open={Boolean(pendingPhoto)} onClose={uploading ? () => {} : closePendingPhoto} title="Nueva foto">
+        {pendingPhoto && (
+          <form onSubmit={savePhoto}>
+            <img src={pendingPhoto.preview} alt="Vista previa" className="max-h-72 w-full rounded-xl object-cover" />
+            <label className="mt-4 block text-body-sm font-medium text-black/60" htmlFor="photo-description">
+              ¿Qué se realizó?
+            </label>
+            <textarea
+              id="photo-description"
+              rows={4}
+              value={photoDescription}
+              onChange={(e) => setPhotoDescription(e.target.value)}
+              placeholder="Ej. Cambio de pastillas de freno delanteras y limpieza de discos."
+              className="mt-1 w-full resize-none rounded-xl border border-black/[0.1] bg-pure-white px-4 py-3 text-body outline-none placeholder:text-black/35 focus:border-notion-blue"
+            />
+            {photoError && (
+              <p role="alert" className="mt-2 text-body-sm text-vermillion">
+                {photoError}
+              </p>
+            )}
+            <div className="mt-4 space-y-3">
+              <button type="submit" disabled={uploading} className={primaryButtonClass}>
+                {uploading ? 'Subiendo…' : 'Guardar foto'}
+              </button>
+              <button type="button" onClick={closePendingPhoto} disabled={uploading} className={outlineButtonClass}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </Sheet>
 
       {/* Barra flotante: foto · nueva nota · enviar */}
       <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
@@ -309,7 +377,7 @@ export default function OrderDetail() {
           <form onSubmit={addNote} className="flex items-center gap-3">
             <label className={`${floatCircleClass} cursor-pointer ${uploading ? 'animate-pulse' : ''}`} aria-label="Subir foto">
               <IconCamera />
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPhoto} disabled={uploading} className="sr-only" />
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickPhoto} disabled={uploading} className="sr-only" />
             </label>
             <label className={floatPillClass}>
               <input
