@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { STATUSES } from '../lib/orderStatus'
-import { canvasInputClass, cardClass } from '../lib/styles'
+import { useAuth } from '../hooks/useAuth'
+import { STATUSES, getStatus } from '../lib/orderStatus'
+import { floatCircleClass, floatPillClass, topPillClass } from '../lib/styles'
 import OrderCard from '../components/OrderCard'
+import Popover, { MenuItem } from '../components/Popover'
+import { SectionLabel } from '../components/PageUI'
+import { IconCompose, IconFilter, IconHome, IconLogout, IconSearch } from '../components/icons'
 
 export default function Orders() {
+  const { session } = useAuth()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [menu, setMenu] = useState(null) // 'account' | 'filter' | null
 
   useEffect(() => {
     async function loadOrders() {
@@ -34,62 +40,114 @@ export default function Orders() {
       (!term || o.plate.toLowerCase().includes(term) || o.client_name.toLowerCase().includes(term)),
   )
 
-  // Filtro activo = Ghost CTA (azul claro); inactivo = enlace tenue. El azul sólido queda para la acción principal.
-  const chipClass = (active) =>
-    `h-10 shrink-0 rounded-lg px-4 text-body-sm font-medium transition-colors duration-200 ${
-      active ? 'bg-sky-tint text-notion-blue' : 'text-black/[0.54] hover:text-black'
-    }`
+  const email = session?.user?.email ?? ''
+  const filterLabel = statusFilter === 'all' ? 'Todas las órdenes' : getStatus(statusFilter).label
+
+  function chooseFilter(value) {
+    setStatusFilter(value)
+    setMenu(null)
+  }
+
+  const filterMenu = (
+    <>
+      <MenuItem icon={<IconFilter size={20} />} onClick={() => chooseFilter('all')} active={statusFilter === 'all'}>
+        Todas
+      </MenuItem>
+      {STATUSES.map((s) => (
+        <MenuItem
+          key={s.value}
+          icon={<span className={`block h-2.5 w-2.5 rounded-full ${s.dot}`} />}
+          onClick={() => chooseFilter(s.value)}
+          active={statusFilter === s.value}
+        >
+          {s.label}
+        </MenuItem>
+      ))}
+    </>
+  )
 
   return (
-    <main className="mx-auto max-w-md p-6 pb-28">
-      <h1 className="text-heading-sm font-bold">Órdenes</h1>
-
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Buscar por placa o cliente"
-        className={`mt-4 ${canvasInputClass}`}
-        aria-label="Buscar órdenes"
-      />
-
-      <div className="-mx-6 mt-3 flex gap-2 overflow-x-auto px-6 pb-1">
-        <button type="button" className={chipClass(statusFilter === 'all')} onClick={() => setStatusFilter('all')}>
-          Todas
+    <main className="mx-auto min-h-screen max-w-md px-4 pb-32">
+      {/* Barra superior: avatar + píldora activa, como "N · Inicio" en Notion */}
+      <header className="relative flex items-center gap-2 pt-4 pb-2">
+        <button
+          type="button"
+          onClick={() => setMenu('account')}
+          aria-label="Cuenta"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-pure-white bg-black/[0.05] text-subheading font-medium text-black/50 uppercase shadow-[0_1px_6px_rgba(0,0,0,0.08)]"
+        >
+          {email.charAt(0) || '?'}
         </button>
-        {STATUSES.map((s) => (
-          <button key={s.value} type="button" className={chipClass(statusFilter === s.value)} onClick={() => setStatusFilter(s.value)}>
-            {s.label}
-          </button>
-        ))}
+        <span className={topPillClass}>
+          <IconHome size={20} />
+          Órdenes
+        </span>
+
+        <Popover open={menu === 'account'} onClose={() => setMenu(null)} className="top-16 left-0">
+          <p className="truncate px-4 py-2 text-body-sm text-black/45">{email}</p>
+          <MenuItem icon={<IconLogout size={20} />} onClick={() => supabase.auth.signOut()}>
+            Cerrar sesión
+          </MenuItem>
+        </Popover>
+      </header>
+
+      <div className="relative mt-2">
+        <SectionLabel onClick={() => setMenu('filter-top')}>{filterLabel}</SectionLabel>
+        <Popover open={menu === 'filter-top'} onClose={() => setMenu(null)} className="top-10 left-0">
+          {filterMenu}
+        </Popover>
       </div>
 
-      <section className="mt-4 space-y-3">
-        {loading && <p className="text-center text-body-sm text-graphite">Cargando órdenes…</p>}
+      <section className="mt-1">
+        {loading && <p className="px-2 py-3 text-body-sm text-black/45">Cargando órdenes…</p>}
         {error && (
-          <p role="alert" className={`${cardClass} text-center text-body-sm text-vermillion`}>
+          <p role="alert" className="px-2 py-3 text-body-sm text-vermillion">
             {error}
           </p>
         )}
         {!loading && !error && orders.length === 0 && (
-          <p className={`${cardClass} text-center text-body-sm text-graphite`}>Aún no hay órdenes. Crea la primera.</p>
+          <p className="px-2 py-3 text-body-sm text-black/45">Aún no hay órdenes. Toca el lápiz para crear la primera.</p>
         )}
         {!loading && !error && orders.length > 0 && visible.length === 0 && (
-          <p className={`${cardClass} text-center text-body-sm text-graphite`}>Ninguna orden coincide con el filtro.</p>
+          <p className="px-2 py-3 text-body-sm text-black/45">Ninguna orden coincide con la búsqueda.</p>
         )}
         {visible.map((order) => (
           <OrderCard key={order.id} order={order} />
         ))}
       </section>
 
-      {/* Botón fijo abajo: fácil de alcanzar con una mano. Es el único botón relleno de la pantalla. */}
-      <div className="fixed inset-x-0 bottom-0 bg-paper-warmth p-4 shadow-[0px_-3px_9px_0px_rgb(0_0_0/0.03)]">
-        <Link
-          to="/orders/new"
-          className="mx-auto flex h-12 max-w-md items-center justify-center rounded-lg bg-notion-blue text-body-sm font-medium text-white transition-opacity duration-200 hover:opacity-90"
-        >
-          Nueva orden
-        </Link>
+      {/* Barra flotante: filtro · búsqueda · nueva orden (como búsqueda · IA · redactar en Notion) */}
+      <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="relative mx-auto flex max-w-md items-center gap-3">
+          <button type="button" onClick={() => setMenu('filter')} aria-label="Filtrar por estado" className={floatCircleClass}>
+            <IconFilter />
+          </button>
+          <label className={floatPillClass}>
+            <span className="text-black/45">
+              <IconSearch size={20} />
+            </span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar placa o cliente"
+              aria-label="Buscar órdenes"
+              className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-black/40"
+            />
+          </label>
+          {/* Única acción principal de la pantalla: en azul */}
+          <Link
+            to="/orders/new"
+            aria-label="Nueva orden"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-notion-blue text-white shadow-[0_2px_14px_rgba(0,117,222,0.35)] transition-opacity duration-200 hover:opacity-90"
+          >
+            <IconCompose />
+          </Link>
+
+          <Popover open={menu === 'filter'} onClose={() => setMenu(null)} className="bottom-16 left-0">
+            {filterMenu}
+          </Popover>
+        </div>
       </div>
     </main>
   )

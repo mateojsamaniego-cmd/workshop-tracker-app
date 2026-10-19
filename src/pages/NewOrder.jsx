@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { cardClass, inputClass, primaryButtonClass, textareaClass } from '../lib/styles'
+import { bareInputClass } from '../lib/styles'
+import { PageTopBar, PropertyRow } from '../components/PageUI'
+import { IconCalendar, IconCar, IconPage, IconPhone, IconUser } from '../components/icons'
 
 const EMPTY_FORM = {
   plate: '',
@@ -12,8 +14,7 @@ const EMPTY_FORM = {
   estimated_delivery: '',
 }
 
-const labelClass = 'block text-body-sm font-medium'
-
+// La nueva orden se llena como una página de Notion: título grande + propiedades sin bordes
 export default function NewOrder() {
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
@@ -34,7 +35,7 @@ export default function NewOrder() {
     const phone = form.client_phone.trim()
 
     if (!plate || !clientName || !vehicle) {
-      setError('La placa, el nombre del cliente y el vehículo son obligatorios.')
+      setError('La placa, el cliente y el vehículo son obligatorios.')
       return
     }
     if (phone && !/^[0-9+\s-]{7,15}$/.test(phone)) {
@@ -61,57 +62,73 @@ export default function NewOrder() {
       setError('No se pudo crear la orden. Intenta de nuevo.')
       return
     }
-    navigate(`/orders/${data.id}`)
+    navigate(`/orders/${data.id}`, { replace: true })
   }
 
   return (
-    <main className="mx-auto max-w-md p-6">
-      <Link to="/orders" className="inline-block rounded-lg py-2 text-body-sm font-medium text-black/[0.54] hover:text-black">
-        ← Órdenes
-      </Link>
-      <h1 className="mt-2 text-heading-sm font-bold">Nueva orden</h1>
+    <div className="min-h-screen bg-pure-white">
+      <PageTopBar
+        backTo="/orders"
+        center={
+          <span className="flex h-10 items-center gap-2 rounded-full bg-black/[0.05] px-4 text-body-sm font-medium text-black/70">
+            <IconPage size={18} />
+            Nueva orden
+          </span>
+        }
+        right={
+          <button
+            type="submit"
+            form="new-order"
+            disabled={submitting}
+            className="h-10 rounded-full bg-notion-blue px-5 text-body-sm font-medium text-white transition-opacity duration-200 hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? 'Creando…' : 'Crear'}
+          </button>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className={`mt-4 ${cardClass}`} noValidate>
-        <label className={labelClass} htmlFor="plate">
-          Placa *
-          <input id="plate" value={form.plate} onChange={setField('plate')} className={`${inputClass} uppercase`} autoCapitalize="characters" />
-        </label>
+      <form id="new-order" onSubmit={handleSubmit} className="mx-auto max-w-md px-6 pt-4 pb-16" noValidate>
+        <input
+          value={form.plate}
+          onChange={setField('plate')}
+          placeholder="Placa"
+          aria-label="Placa"
+          autoCapitalize="characters"
+          className="w-full bg-transparent text-[30px] leading-tight font-bold tracking-[-0.02em] text-black/90 uppercase outline-none placeholder:normal-case placeholder:text-black/20"
+        />
 
-        <label className={`mt-4 ${labelClass}`} htmlFor="client_name">
-          Nombre del cliente *
-          <input id="client_name" value={form.client_name} onChange={setField('client_name')} className={inputClass} autoComplete="off" />
-        </label>
+        <div className="mt-4">
+          <PropertyRow icon={<IconUser size={18} />} label="Cliente">
+            <input value={form.client_name} onChange={setField('client_name')} placeholder="Vacío" aria-label="Nombre del cliente" className={bareInputClass} />
+          </PropertyRow>
+          <PropertyRow icon={<IconPhone size={18} />} label="Teléfono">
+            <input type="tel" inputMode="tel" value={form.client_phone} onChange={setField('client_phone')} placeholder="0991234567" aria-label="Teléfono" className={bareInputClass} />
+          </PropertyRow>
+          <PropertyRow icon={<IconCar size={18} />} label="Vehículo">
+            <input value={form.vehicle} onChange={setField('vehicle')} placeholder="Chevrolet Sail 2018" aria-label="Vehículo" className={bareInputClass} />
+          </PropertyRow>
+          <PropertyRow icon={<IconCalendar size={18} />} label="Entrega">
+            <input type="date" value={form.estimated_delivery} onChange={setField('estimated_delivery')} aria-label="Fecha estimada de entrega" className={bareInputClass} />
+          </PropertyRow>
+        </div>
 
-        <label className={`mt-4 ${labelClass}`} htmlFor="client_phone">
-          Teléfono (para WhatsApp)
-          <input id="client_phone" type="tel" inputMode="tel" value={form.client_phone} onChange={setField('client_phone')} className={inputClass} placeholder="0991234567" />
-        </label>
+        <hr className="my-4 border-black/[0.08]" />
 
-        <label className={`mt-4 ${labelClass}`} htmlFor="vehicle">
-          Vehículo *
-          <input id="vehicle" value={form.vehicle} onChange={setField('vehicle')} className={inputClass} placeholder="Chevrolet Sail 2018" />
-        </label>
-
-        <label className={`mt-4 ${labelClass}`} htmlFor="description">
-          Trabajo a realizar
-          <textarea id="description" rows={3} value={form.description} onChange={setField('description')} className={textareaClass} />
-        </label>
-
-        <label className={`mt-4 ${labelClass}`} htmlFor="estimated_delivery">
-          Fecha estimada de entrega
-          <input id="estimated_delivery" type="date" value={form.estimated_delivery} onChange={setField('estimated_delivery')} className={inputClass} />
-        </label>
+        <textarea
+          rows={5}
+          value={form.description}
+          onChange={setField('description')}
+          placeholder="Describe el trabajo a realizar…"
+          aria-label="Trabajo a realizar"
+          className="w-full resize-none bg-transparent text-body leading-relaxed outline-none placeholder:text-black/30"
+        />
 
         {error && (
-          <p role="alert" className="mt-4 text-body-sm text-vermillion">
+          <p role="alert" className="mt-2 text-body-sm text-vermillion">
             {error}
           </p>
         )}
-
-        <button type="submit" disabled={submitting} className={`mt-6 ${primaryButtonClass}`}>
-          {submitting ? 'Guardando…' : 'Crear orden'}
-        </button>
       </form>
-    </main>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 import { getStatus } from '../lib/orderStatus'
 
-// Pill Tag de DESIGN.md: relleno de color, radio 9999px, padding 4px 12px
+// Etiqueta de estado al estilo de las propiedades "select" de Notion
 export default function StatusPill({ status }) {
-  const { label, pill } = getStatus(status)
-  return <span className={`inline-block rounded-full px-3 py-1 text-caption font-medium ${pill}`}>{label}</span>
+  const { label, tag } = getStatus(status)
+  return <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-body-sm font-medium ${tag}`}>{label}</span>
 }

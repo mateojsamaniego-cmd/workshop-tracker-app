@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { STATUSES, getStatus } from '../lib/orderStatus'
+import { STATUSES } from '../lib/orderStatus'
 import { formatDateOnly, formatDateTime } from '../lib/format'
-import { cardClass } from '../lib/styles'
+import StatusPill from '../components/StatusPill'
+import { PageTitle, PropertyRow, SectionLabel } from '../components/PageUI'
+import { IconCalendar, IconCar, IconCheck, IconClock, IconStatus } from '../components/icons'
 
 // Nombre del taller para el encabezado público (pendiente de definir con el dueño)
 const SHOP_NAME = 'Taller'
@@ -29,99 +31,105 @@ export default function Tracking() {
     load()
   }, [token])
 
-  if (loading) return <p className="p-6 text-center text-body-sm text-graphite">Cargando…</p>
-
-  if (error) {
-    return (
-      <main className="mx-auto max-w-md p-6">
-        <p role="alert" className={`${cardClass} text-center text-body-sm text-vermillion`}>
-          {error}
+  const shell = (children) => (
+    <div className="min-h-screen bg-pure-white">
+      <main className="mx-auto max-w-md px-6 pt-8 pb-16">
+        <p className="flex items-center gap-2 text-body-sm font-medium text-black/45">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md border-2 border-black/80 text-caption font-bold text-black/80">T</span>
+          {SHOP_NAME}
         </p>
+        {children}
       </main>
-    )
-  }
+    </div>
+  )
 
+  if (loading) return shell(<p className="mt-6 text-body-sm text-black/45">Cargando…</p>)
+  if (error) return shell(<p role="alert" className="mt-6 text-body-sm text-vermillion">{error}</p>)
   if (!order) {
-    return (
-      <main className="mx-auto max-w-md p-6">
-        <h1 className="text-heading-sm font-bold">{SHOP_NAME}</h1>
-        <p className={`mt-4 ${cardClass} text-center text-body-sm text-graphite`}>
-          No encontramos este enlace. Revisa que esté completo o consulta con el taller.
-        </p>
-      </main>
+    return shell(
+      <p className="mt-6 text-body text-black/60">No encontramos este enlace. Revisa que esté completo o consulta con el taller.</p>,
     )
   }
 
-  const status = getStatus(order.status)
   const currentIndex = STATUSES.findIndex((s) => s.value === order.status)
 
-  return (
-    <main className="mx-auto max-w-md space-y-4 p-6 pb-12">
-      <header>
-        <p className="text-body-sm font-medium text-graphite">{SHOP_NAME}</p>
-        <h1 className="mt-1 text-heading-sm font-bold">Seguimiento de tu vehículo</h1>
-      </header>
+  return shell(
+    <>
+      <div className="mt-6">
+        <PageTitle>{order.vehicle}</PageTitle>
+      </div>
 
-      {/* Accent Feature Card: el color del panel cambia según el estado */}
-      <section className={`rounded-xl p-6 ${status.accent}`}>
-        <p className="text-body-sm font-medium opacity-60">Estado actual</p>
-        <p className="mt-1 text-heading-sm font-bold">{status.label}</p>
-        <p className="mt-4 text-body font-medium">{order.vehicle}</p>
-        <p className="text-body-sm opacity-60">Placa {order.plate_masked}</p>
-        {order.estimated_delivery && (
-          <p className="mt-3 text-body-sm">Entrega estimada: {formatDateOnly(order.estimated_delivery)}</p>
-        )}
-        <p className="mt-3 text-caption opacity-60">Última actualización: {formatDateTime(order.updated_at)}</p>
-      </section>
+      <div className="mt-4">
+        <PropertyRow icon={<IconStatus size={18} />} label="Estado">
+          <StatusPill status={order.status} />
+        </PropertyRow>
+        <PropertyRow icon={<IconCar size={18} />} label="Placa">
+          {order.plate_masked}
+        </PropertyRow>
+        <PropertyRow icon={<IconCalendar size={18} />} label="Entrega">
+          {order.estimated_delivery ? formatDateOnly(order.estimated_delivery) : <span className="text-black/30">Por definir</span>}
+        </PropertyRow>
+        <PropertyRow icon={<IconClock size={18} />} label="Actualizado">
+          {formatDateTime(order.updated_at)}
+        </PropertyRow>
+      </div>
 
       {order.description && (
-        <section className={cardClass}>
-          <h2 className="text-subheading font-semibold">Trabajo a realizar</h2>
-          <p className="mt-2 text-body-sm text-graphite">{order.description}</p>
-        </section>
+        <>
+          <hr className="my-4 border-black/[0.08]" />
+          <p className="text-body leading-relaxed text-black/90">{order.description}</p>
+        </>
       )}
 
-      <section className={cardClass}>
-        <h2 className="text-subheading font-semibold">Avance</h2>
-        <ol className="mt-3 space-y-3">
+      <div className="mt-8">
+        <SectionLabel>Avance</SectionLabel>
+        <ol>
           {STATUSES.map((s, index) => {
             const done = index <= currentIndex
             return (
-              <li key={s.value} className="flex items-center gap-3 text-body-sm">
-                <span className={`h-3 w-3 shrink-0 rounded-full ${done ? 'bg-ink-black' : 'bg-black/15'}`} />
-                <span className={done ? 'font-medium' : 'text-black/[0.4]'}>{s.label}</span>
+              <li key={s.value} className="flex min-h-12 items-center gap-4">
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                    done ? 'bg-black/85 text-white' : 'border-[1.5px] border-black/20'
+                  }`}
+                >
+                  {done && <IconCheck size={14} strokeWidth={2.5} />}
+                </span>
+                <span className={`text-body ${done ? 'text-black/90' : 'text-black/35'} ${index === currentIndex ? 'font-semibold' : ''}`}>
+                  {s.label}
+                </span>
               </li>
             )
           })}
         </ol>
-      </section>
+      </div>
 
       {order.photos.length > 0 && (
-        <section className={cardClass}>
-          <h2 className="text-subheading font-semibold">Fotos</h2>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-8">
+          <SectionLabel>Fotos</SectionLabel>
+          <div className="mt-1 grid grid-cols-3 gap-1.5">
             {order.photos.map((p) => (
               <a key={p.storage_path} href={photoUrl(p.storage_path)} target="_blank" rel="noreferrer">
                 <img src={photoUrl(p.storage_path)} alt="Foto del trabajo" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
               </a>
             ))}
           </div>
-        </section>
+        </div>
       )}
 
       {order.notes.length > 0 && (
-        <section className={cardClass}>
-          <h2 className="text-subheading font-semibold">Novedades</h2>
-          <ul className="mt-3 space-y-3">
+        <div className="mt-8">
+          <SectionLabel>Novedades</SectionLabel>
+          <ul>
             {[...order.notes].reverse().map((n) => (
-              <li key={n.created_at} className="rounded-lg border border-black/[0.08] bg-paper-warmth px-3 py-2 text-body-sm">
-                <p>{n.body}</p>
-                <p className="mt-1 text-caption text-graphite">{formatDateTime(n.created_at)}</p>
+              <li key={n.created_at} className="py-3">
+                <p className="text-body text-black/90">{n.body}</p>
+                <p className="mt-0.5 text-caption text-black/40">{formatDateTime(n.created_at)}</p>
               </li>
             ))}
           </ul>
-        </section>
+        </div>
       )}
-    </main>
+    </>,
   )
 }
