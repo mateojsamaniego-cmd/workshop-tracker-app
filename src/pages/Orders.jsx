@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { STATUSES } from '../lib/orderStatus'
-import { cardClass, inputClass } from '../lib/styles'
+import { canvasInputClass, cardClass } from '../lib/styles'
 import OrderCard from '../components/OrderCard'
 
 export default function Orders() {
@@ -34,21 +34,22 @@ export default function Orders() {
       (!term || o.plate.toLowerCase().includes(term) || o.client_name.toLowerCase().includes(term)),
   )
 
+  // Filtro activo = Ghost CTA (azul claro); inactivo = enlace tenue. El azul sólido queda para la acción principal.
   const chipClass = (active) =>
-    `h-9 shrink-0 rounded-lg px-3 text-sm font-medium transition-colors duration-200 ${
-      active ? 'bg-notion-blue text-white' : 'bg-pure-white text-black/70 border border-black/[0.08]'
+    `h-10 shrink-0 rounded-lg px-4 text-body-sm font-medium transition-colors duration-200 ${
+      active ? 'bg-sky-tint text-notion-blue' : 'text-black/[0.54] hover:text-black'
     }`
 
   return (
     <main className="mx-auto max-w-md p-6 pb-28">
-      <h1 className="text-2xl font-bold tracking-tight">Órdenes</h1>
+      <h1 className="text-heading-sm font-bold">Órdenes</h1>
 
       <input
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Buscar por placa o cliente"
-        className={inputClass}
+        className={`mt-4 ${canvasInputClass}`}
         aria-label="Buscar órdenes"
       />
 
@@ -64,28 +65,28 @@ export default function Orders() {
       </div>
 
       <section className="mt-4 space-y-3">
-        {loading && <p className="text-center text-graphite">Cargando órdenes…</p>}
+        {loading && <p className="text-center text-body-sm text-graphite">Cargando órdenes…</p>}
         {error && (
-          <p role="alert" className={`${cardClass} text-center text-vermillion`}>
+          <p role="alert" className={`${cardClass} text-center text-body-sm text-vermillion`}>
             {error}
           </p>
         )}
         {!loading && !error && orders.length === 0 && (
-          <p className={`${cardClass} text-center text-graphite`}>Aún no hay órdenes. Crea la primera.</p>
+          <p className={`${cardClass} text-center text-body-sm text-graphite`}>Aún no hay órdenes. Crea la primera.</p>
         )}
         {!loading && !error && orders.length > 0 && visible.length === 0 && (
-          <p className={`${cardClass} text-center text-graphite`}>Ninguna orden coincide con el filtro.</p>
+          <p className={`${cardClass} text-center text-body-sm text-graphite`}>Ninguna orden coincide con el filtro.</p>
         )}
         {visible.map((order) => (
           <OrderCard key={order.id} order={order} />
         ))}
       </section>
 
-      {/* Botón fijo abajo: fácil de alcanzar con una mano */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-black/[0.08] bg-paper-warmth p-4">
+      {/* Botón fijo abajo: fácil de alcanzar con una mano. Es el único botón relleno de la pantalla. */}
+      <div className="fixed inset-x-0 bottom-0 bg-paper-warmth p-4 shadow-[0px_-3px_9px_0px_rgb(0_0_0/0.03)]">
         <Link
           to="/orders/new"
-          className="mx-auto flex h-12 max-w-md items-center justify-center rounded-lg bg-notion-blue text-base font-medium text-white transition-colors duration-200 hover:bg-signal-blue"
+          className="mx-auto flex h-12 max-w-md items-center justify-center rounded-lg bg-notion-blue text-body-sm font-medium text-white transition-opacity duration-200 hover:opacity-90"
         >
           Nueva orden
         </Link>

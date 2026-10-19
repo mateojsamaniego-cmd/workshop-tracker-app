@@ -3,9 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import LoadingScreen from '../components/LoadingScreen'
-
-const inputClass =
-  'mt-1 h-12 w-full rounded-lg border border-black/[0.15] bg-pure-white px-3 text-base outline-none transition-colors duration-200 focus:border-notion-blue'
+import { cardClass, inputClass, primaryButtonClass } from '../lib/styles'
 
 export default function Login() {
   const { session, loading } = useAuth()
@@ -39,15 +37,16 @@ export default function Login() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-      <h1 className="text-3xl font-bold tracking-tight">Taller App</h1>
-      <p className="mt-1 text-graphite">Ingreso del personal</p>
+      {/* Titular con la píldora de resaltado, el recurso tipográfico característico de DESIGN.md */}
+      <h1 className="text-heading font-medium">
+        Tu taller,
+        <br />
+        <span className="inline-block rounded-full bg-peach px-6 py-2">al día</span>
+      </h1>
+      <p className="mt-4 text-body text-graphite">Ingreso del personal</p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-6 rounded-xl border border-black/[0.08] bg-pure-white p-6"
-        noValidate
-      >
-        <label className="block text-sm font-medium" htmlFor="email">
+      <form onSubmit={handleSubmit} className={`mt-6 ${cardClass}`} noValidate>
+        <label className="block text-body-sm font-medium" htmlFor="email">
           Correo
           <input
             id="email"
@@ -59,7 +58,7 @@ export default function Login() {
           />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="password">
+        <label className="mt-4 block text-body-sm font-medium" htmlFor="password">
           Contraseña
           <input
             id="password"
@@ -72,16 +71,12 @@ export default function Login() {
         </label>
 
         {error && (
-          <p role="alert" className="mt-4 text-sm text-vermillion">
+          <p role="alert" className="mt-4 text-body-sm text-vermillion">
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-6 h-12 w-full rounded-lg bg-notion-blue text-base font-medium text-white transition-colors duration-200 hover:bg-signal-blue disabled:opacity-60"
-        >
+        <button type="submit" disabled={submitting} className={`mt-6 ${primaryButtonClass}`}>
           {submitting ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>

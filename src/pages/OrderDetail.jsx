@@ -5,12 +5,15 @@ import { STATUSES } from '../lib/orderStatus'
 import { formatDateOnly, formatDateTime } from '../lib/format'
 import { buildWhatsappUrl } from '../lib/whatsapp'
 import { compressImage } from '../lib/imageCompress'
+import { randomId } from '../lib/randomId'
 import { cardClass, ghostButtonClass, inputClass, primaryButtonClass, textareaClass } from '../lib/styles'
 import StatusPill from '../components/StatusPill'
 
 function photoUrl(path) {
   return supabase.storage.from('fotos').getPublicUrl(path).data.publicUrl
 }
+
+const backLinkClass = 'inline-block rounded-lg py-2 text-body-sm font-medium text-black/[0.54] hover:text-black'
 
 export default function OrderDetail() {
   const { id } = useParams()
@@ -89,7 +92,7 @@ export default function OrderDetail() {
     try {
       const blob = await compressImage(file)
       // Nombre aleatorio: la URL de la foto no se puede adivinar
-      const path = `${id}/${crypto.randomUUID()}.jpg`
+      const path = `${id}/${randomId()}.jpg`
       const { error: uploadError } = await supabase.storage
         .from('fotos')
         .upload(path, blob, { contentType: 'image/jpeg' })
@@ -109,15 +112,15 @@ export default function OrderDetail() {
     }
   }
 
-  if (loading) return <p className="p-6 text-center text-graphite">Cargando orden…</p>
+  if (loading) return <p className="p-6 text-center text-body-sm text-graphite">Cargando orden…</p>
 
   if (error || !order) {
     return (
       <main className="mx-auto max-w-md p-6">
-        <Link to="/orders" className="text-sm font-medium text-notion-blue">
+        <Link to="/orders" className={backLinkClass}>
           ← Órdenes
         </Link>
-        <p role="alert" className={`mt-4 ${cardClass} text-center ${error ? 'text-vermillion' : 'text-graphite'}`}>
+        <p role="alert" className={`mt-4 ${cardClass} text-center text-body-sm ${error ? 'text-vermillion' : 'text-graphite'}`}>
           {error || 'La orden no existe.'}
         </p>
       </main>
@@ -139,26 +142,26 @@ export default function OrderDetail() {
 
   return (
     <main className="mx-auto max-w-md space-y-4 p-6 pb-12">
-      <Link to="/orders" className="text-sm font-medium text-notion-blue">
+      <Link to="/orders" className={backLinkClass}>
         ← Órdenes
       </Link>
 
       <section className={cardClass}>
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{order.plate}</h1>
+          <h1 className="text-heading-sm font-bold">{order.plate}</h1>
           <StatusPill status={order.status} />
         </div>
-        <p className="mt-1">{order.vehicle}</p>
-        <p className="mt-3 text-sm text-graphite">
+        <p className="mt-2 text-body">{order.vehicle}</p>
+        <p className="mt-3 text-body-sm text-graphite">
           Cliente: {order.client_name}
           {order.client_phone && ` · ${order.client_phone}`}
         </p>
-        {order.description && <p className="mt-3 text-sm">{order.description}</p>}
+        {order.description && <p className="mt-3 text-body-sm">{order.description}</p>}
         {order.estimated_delivery && (
-          <p className="mt-3 text-sm text-graphite">Entrega estimada: {formatDateOnly(order.estimated_delivery)}</p>
+          <p className="mt-3 text-body-sm text-graphite">Entrega estimada: {formatDateOnly(order.estimated_delivery)}</p>
         )}
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="status">
+        <label className="mt-4 block text-body-sm font-medium" htmlFor="status">
           Estado
           <select id="status" value={order.status} onChange={changeStatus} disabled={savingStatus} className={inputClass}>
             {STATUSES.map((s) => (
@@ -171,14 +174,15 @@ export default function OrderDetail() {
       </section>
 
       {actionError && (
-        <p role="alert" className="text-sm text-vermillion">
+        <p role="alert" className="text-body-sm text-vermillion">
           {actionError}
         </p>
       )}
 
+      {/* Única acción principal (botón azul sólido) de esta pantalla */}
       <section className={cardClass}>
-        <h2 className="text-lg font-semibold">Enlace para el cliente</h2>
-        <p className="mt-1 break-all text-sm text-graphite">{trackingUrl}</p>
+        <h2 className="text-subheading font-semibold">Enlace para el cliente</h2>
+        <p className="mt-2 break-all text-body-sm text-graphite">{trackingUrl}</p>
         <a
           href={buildWhatsappUrl(order.client_phone, shareMessage)}
           target="_blank"
@@ -193,9 +197,9 @@ export default function OrderDetail() {
       </section>
 
       <section className={cardClass}>
-        <h2 className="text-lg font-semibold">Fotos</h2>
+        <h2 className="text-subheading font-semibold">Fotos</h2>
         {photos.length === 0 ? (
-          <p className="mt-2 text-sm text-graphite">Aún no hay fotos.</p>
+          <p className="mt-2 text-body-sm text-graphite">Aún no hay fotos.</p>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             {photos.map((p) => (
@@ -206,14 +210,14 @@ export default function OrderDetail() {
           </div>
         )}
 
-        <label className={`mt-4 flex cursor-pointer items-center justify-center ${ghostButtonClass} ${uploading ? 'opacity-60' : ''}`}>
+        <label className={`mt-4 flex cursor-pointer items-center justify-center ${ghostButtonClass} ${uploading ? 'opacity-50' : ''}`}>
           {uploading ? 'Subiendo…' : 'Subir foto'}
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPhoto} disabled={uploading} className="sr-only" />
         </label>
       </section>
 
       <section className={cardClass}>
-        <h2 className="text-lg font-semibold">Notas</h2>
+        <h2 className="text-subheading font-semibold">Notas</h2>
         <form onSubmit={addNote} className="mt-3">
           <textarea
             rows={3}
@@ -223,23 +227,23 @@ export default function OrderDetail() {
             aria-label="Nueva nota"
             className={textareaClass}
           />
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={noteVisible} onChange={(e) => setNoteVisible(e.target.checked)} className="h-5 w-5" />
+          <label className="mt-2 flex items-center gap-2 text-body-sm">
+            <input type="checkbox" checked={noteVisible} onChange={(e) => setNoteVisible(e.target.checked)} className="h-5 w-5 accent-notion-blue" />
             Visible para el cliente
           </label>
-          <button type="submit" disabled={savingNote || !noteBody.trim()} className={`mt-3 ${primaryButtonClass}`}>
+          <button type="submit" disabled={savingNote || !noteBody.trim()} className={`mt-3 ${ghostButtonClass}`}>
             {savingNote ? 'Guardando…' : 'Agregar nota'}
           </button>
         </form>
 
         {notes.length === 0 ? (
-          <p className="mt-4 text-sm text-graphite">Aún no hay notas.</p>
+          <p className="mt-4 text-body-sm text-graphite">Aún no hay notas.</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {notes.map((n) => (
-              <li key={n.id} className="rounded-lg bg-paper-warmth p-3 text-sm">
+              <li key={n.id} className="rounded-lg border border-black/[0.08] bg-paper-warmth px-3 py-2 text-body-sm">
                 <p>{n.body}</p>
-                <p className="mt-1 text-xs text-graphite">
+                <p className="mt-1 text-caption text-graphite">
                   {formatDateTime(n.created_at)} · {n.visible_to_client ? 'Visible al cliente' : 'Solo interna'}
                 </p>
               </li>

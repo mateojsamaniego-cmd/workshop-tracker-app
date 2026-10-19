@@ -12,6 +12,8 @@ const EMPTY_FORM = {
   estimated_delivery: '',
 }
 
+const labelClass = 'block text-body-sm font-medium'
+
 export default function NewOrder() {
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
@@ -64,44 +66,44 @@ export default function NewOrder() {
 
   return (
     <main className="mx-auto max-w-md p-6">
-      <Link to="/orders" className="text-sm font-medium text-notion-blue">
+      <Link to="/orders" className="inline-block rounded-lg py-2 text-body-sm font-medium text-black/[0.54] hover:text-black">
         ← Órdenes
       </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">Nueva orden</h1>
+      <h1 className="mt-2 text-heading-sm font-bold">Nueva orden</h1>
 
       <form onSubmit={handleSubmit} className={`mt-4 ${cardClass}`} noValidate>
-        <label className="block text-sm font-medium" htmlFor="plate">
+        <label className={labelClass} htmlFor="plate">
           Placa *
           <input id="plate" value={form.plate} onChange={setField('plate')} className={`${inputClass} uppercase`} autoCapitalize="characters" />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="client_name">
+        <label className={`mt-4 ${labelClass}`} htmlFor="client_name">
           Nombre del cliente *
           <input id="client_name" value={form.client_name} onChange={setField('client_name')} className={inputClass} autoComplete="off" />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="client_phone">
+        <label className={`mt-4 ${labelClass}`} htmlFor="client_phone">
           Teléfono (para WhatsApp)
           <input id="client_phone" type="tel" inputMode="tel" value={form.client_phone} onChange={setField('client_phone')} className={inputClass} placeholder="0991234567" />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="vehicle">
+        <label className={`mt-4 ${labelClass}`} htmlFor="vehicle">
           Vehículo *
           <input id="vehicle" value={form.vehicle} onChange={setField('vehicle')} className={inputClass} placeholder="Chevrolet Sail 2018" />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="description">
+        <label className={`mt-4 ${labelClass}`} htmlFor="description">
           Trabajo a realizar
           <textarea id="description" rows={3} value={form.description} onChange={setField('description')} className={textareaClass} />
         </label>
 
-        <label className="mt-4 block text-sm font-medium" htmlFor="estimated_delivery">
+        <label className={`mt-4 ${labelClass}`} htmlFor="estimated_delivery">
           Fecha estimada de entrega
           <input id="estimated_delivery" type="date" value={form.estimated_delivery} onChange={setField('estimated_delivery')} className={inputClass} />
         </label>
 
         {error && (
-          <p role="alert" className="mt-4 text-sm text-vermillion">
+          <p role="alert" className="mt-4 text-body-sm text-vermillion">
             {error}
           </p>
         )}
