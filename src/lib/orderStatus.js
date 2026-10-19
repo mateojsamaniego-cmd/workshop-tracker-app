@@ -10,6 +10,21 @@ export const STATUSES = [
   { value: 'delivered', label: 'Entregado', tag: 'bg-black/[0.06] text-black/60', dot: 'bg-black/30' },
 ]
 
+// Cadena de estados permitida: desde cada estado solo se puede pasar a estos.
+//   Recibido → En proceso ⇄ Esperando repuestos
+//   En proceso → Listo para retirar → Entregado (Listo puede volver a En proceso si hay que corregir algo)
+export const NEXT_STATUSES = {
+  received: ['in_progress'],
+  in_progress: ['waiting_parts', 'ready'],
+  waiting_parts: ['in_progress'],
+  ready: ['delivered', 'in_progress'],
+  delivered: [],
+}
+
+export function canChangeStatus(from, to) {
+  return (NEXT_STATUSES[from] ?? []).includes(to)
+}
+
 export function getStatus(value) {
   return STATUSES.find((s) => s.value === value) ?? { value, label: value, tag: 'bg-black/[0.06] text-black/60', dot: 'bg-black/30' }
 }

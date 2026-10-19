@@ -24,15 +24,14 @@ export default function Sheet({ open, onClose, title, left, right, children }) {
   )
 }
 
-// Botón de texto para la cabecera de la hoja. preventDefault en pointerdown evita que el
-// primer toque solo cierre el teclado (causa de que "a veces no responda").
+// Botón de texto para la cabecera de la hoja. Al estar en la cabecera fija no se mueve con el
+// teclado, así que un toque normal basta (no se retiene el foco: eso reabría el teclado en iOS).
 export function SheetAction({ children, onClick, primary = false, disabled = false, type = 'button', form }) {
   return (
     <button
       type={type}
       form={form}
       onClick={onClick}
-      onPointerDown={(e) => e.preventDefault()}
       disabled={disabled}
       className={`h-11 min-w-11 rounded-full px-4 text-body font-medium transition-opacity duration-200 disabled:opacity-40 ${
         primary ? 'text-notion-blue' : 'text-black/60'

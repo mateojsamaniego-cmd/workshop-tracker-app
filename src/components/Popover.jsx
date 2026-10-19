@@ -12,8 +12,10 @@ export default function Popover({ open, onClose, className = '', children }) {
   )
 }
 
-export function MenuItem({ icon, children, onClick, href, active = false }) {
-  const cls = 'flex h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-body text-black/90 transition-colors duration-200 hover:bg-black/[0.04]'
+export function MenuItem({ icon, children, onClick, href, active = false, disabled = false }) {
+  const cls = `flex h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-body transition-colors duration-200 ${
+    disabled ? 'cursor-not-allowed text-black/25' : 'text-black/90 hover:bg-black/[0.04]'
+  }`
   const content = (
     <>
       <span className="flex w-6 justify-center text-black/70">{icon}</span>
@@ -29,7 +31,7 @@ export function MenuItem({ icon, children, onClick, href, active = false }) {
     )
   }
   return (
-    <button role="menuitem" type="button" onClick={onClick} className={cls}>
+    <button role="menuitem" type="button" onClick={onClick} disabled={disabled} className={cls}>
       {content}
     </button>
   )

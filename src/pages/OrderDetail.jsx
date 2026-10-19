@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { STATUSES, getStatus } from '../lib/orderStatus'
+import { STATUSES, canChangeStatus, getStatus } from '../lib/orderStatus'
 import { formatDate, formatDateOnly } from '../lib/format'
 import { buildWhatsappUrl } from '../lib/whatsapp'
 import { compressImage } from '../lib/imageCompress'
@@ -88,6 +88,10 @@ export default function OrderDetail() {
   async function changeStatus(status) {
     setMenu(null)
     if (status === order.status) return
+    if (!canChangeStatus(order.status, status)) {
+      flash('Ese cambio de estado no sigue la cadena del proceso.')
+      return
+    }
     const { error: updateError } = await supabase.from('orders').update({ status }).eq('id', id)
     if (updateError) {
       flash('No se pudo cambiar el estado.')
@@ -224,10 +228,14 @@ export default function OrderDetail() {
                   icon={<span className={`block h-2.5 w-2.5 rounded-full ${s.dot}`} />}
                   onClick={() => changeStatus(s.value)}
                   active={order.status === s.value}
+                  disabled={order.status !== s.value && !canChangeStatus(order.status, s.value)}
                 >
                   {s.label}
                 </MenuItem>
               ))}
+              <p className="px-4 pt-1 pb-2 text-caption text-black/40">
+                {order.status === 'delivered' ? 'La orden ya fue entregada.' : 'Solo se puede avanzar al siguiente paso.'}
+              </p>
             </Popover>
           </div>
         }
