@@ -1,8 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AuthProvider from './context/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
+import AppLayout from './components/AppLayout'
 import Login from './pages/Login'
 import Orders from './pages/Orders'
+import NewOrder from './pages/NewOrder'
+import OrderDetail from './pages/OrderDetail'
 import Tracking from './pages/Tracking'
 import NotFound from './pages/NotFound'
 
@@ -17,7 +20,11 @@ export default function App() {
 
           {/* Solo personal con sesión */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/orders" element={<Orders />} />
+            <Route element={<AppLayout />}>
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/new" element={<NewOrder />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
+            </Route>
           </Route>
 
           <Route path="/" element={<Navigate to="/orders" replace />} />
