@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+
+# Compilación
+dist/
+dist-ssr/
+.vite/
+
+# Variables de entorno (NUNCA subir). El .example sí se sube.
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor / sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code: configuración personal local (la compartida .claude/settings.json sí se sube)
+.claude/settings.local.json
+
+# Respaldos y volcados de base de datos (pueden contener datos de clientes)
+*.sql.bak
+*.dump
+backups/
+
+# Cloudflare
+.wrangler/
