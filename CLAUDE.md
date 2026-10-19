@@ -6,7 +6,7 @@ Este archivo define cómo debe trabajar Claude en este repositorio. Debe leerse 
 
 App web para un taller de mecánica: el personal registra órdenes de trabajo y sube fotos; el cliente consulta el avance con un enlace único sin login.
 
-- Stack: React + Vite (JavaScript), Supabase (Postgres, Auth, Storage), Cloudflare Pages.
+- Stack: React + Vite (JavaScript), Supabase (Postgres, Auth, Storage), Cloudflare Workers.
 - Alcance: solo el MVP descrito en `README.md`. No agregar funcionalidades fuera de ese alcance sin que el usuario lo pida.
 - Usuario: desarrollador con experiencia en Python, SQL y PostgreSQL; es su primer proyecto con React y Supabase. Explicar los conceptos nuevos de forma breve.
 
@@ -56,7 +56,7 @@ Claude debe pedir confirmación **antes** de:
 
 - Instalar, actualizar o eliminar dependencias (`npm install`, `npm uninstall`, `npm update`). Indicar para qué sirve el paquete y si es mantenido y conocido.
 - Eliminar o mover archivos o carpetas.
-- Cambiar archivos de configuración (`vite.config.js`, `package.json`, `.gitignore`, `.claude/settings.json`, `_redirects`).
+- Cambiar archivos de configuración (`vite.config.js`, `package.json`, `.gitignore`, `.claude/settings.json`, `wrangler.jsonc`).
 - Ejecutar comandos que modifiquen el sistema fuera de la carpeta del proyecto.
 - Hacer cambios que afecten el despliegue o la seguridad.
 
