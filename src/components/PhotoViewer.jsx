@@ -1,10 +1,19 @@
-import Sheet from './Sheet'
+import Sheet, { SheetAction } from './Sheet'
 import { formatDateTime } from '../lib/format'
 
 // Ventana flotante con la foto en grande y la descripción de lo que se hizo
 export default function PhotoViewer({ photo, photoUrl, onClose }) {
   return (
-    <Sheet open={Boolean(photo)} onClose={onClose} title="Trabajo realizado">
+    <Sheet
+      open={Boolean(photo)}
+      onClose={onClose}
+      title="Trabajo realizado"
+      right={
+        <SheetAction onClick={onClose} primary>
+          Listo
+        </SheetAction>
+      }
+    >
       {photo && (
         <>
           <img src={photoUrl(photo.storage_path)} alt={photo.description || 'Foto del trabajo'} className="w-full rounded-xl object-contain" />

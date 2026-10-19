@@ -7,9 +7,9 @@ import { buildWhatsappUrl } from '../lib/whatsapp'
 import { compressImage } from '../lib/imageCompress'
 import { randomId } from '../lib/randomId'
 import { buildTimeline } from '../lib/timeline'
-import { floatCircleClass, floatPillClass, outlineButtonClass, primaryButtonClass } from '../lib/styles'
+import { floatCircleClass, floatPillClass } from '../lib/styles'
 import StatusPill from '../components/StatusPill'
-import Sheet from '../components/Sheet'
+import Sheet, { SheetAction } from '../components/Sheet'
 import PhotoViewer from '../components/PhotoViewer'
 import Timeline from '../components/Timeline'
 import Popover, { MenuItem } from '../components/Popover'
@@ -25,6 +25,7 @@ import {
   IconExternal,
   IconEye,
   IconLock,
+  IconPage,
   IconPhone,
   IconSend,
   IconShare,
@@ -322,34 +323,40 @@ export default function OrderDetail() {
       <PhotoViewer photo={viewing} photoUrl={photoUrl} onClose={() => setViewing(null)} />
 
       {/* Paso obligatorio: describir lo realizado antes de subir la foto */}
-      <Sheet open={Boolean(pendingPhoto)} onClose={uploading ? () => {} : closePendingPhoto} title="Nueva foto">
+      <Sheet
+        open={Boolean(pendingPhoto)}
+        onClose={uploading ? () => {} : closePendingPhoto}
+        title="Nueva foto"
+        left={
+          <SheetAction onClick={closePendingPhoto} disabled={uploading}>
+            Cancelar
+          </SheetAction>
+        }
+        right={
+          <SheetAction type="submit" form="photo-form" primary disabled={uploading || !photoDescription.trim()}>
+            {uploading ? 'Subiendo…' : 'Guardar'}
+          </SheetAction>
+        }
+      >
         {pendingPhoto && (
-          <form onSubmit={savePhoto}>
-            <img src={pendingPhoto.preview} alt="Vista previa" className="max-h-72 w-full rounded-xl object-cover" />
-            <label className="mt-4 block text-body-sm font-medium text-black/60" htmlFor="photo-description">
-              ¿Qué se realizó?
-            </label>
+          <form id="photo-form" onSubmit={savePhoto}>
+            <img src={pendingPhoto.preview} alt="Vista previa" className="max-h-64 w-full rounded-xl object-cover" />
+            <p className="mt-5 flex items-center gap-2 text-body-sm text-black/45">
+              <IconPage size={18} /> ¿Qué se realizó?
+            </p>
             <textarea
-              id="photo-description"
               rows={4}
               value={photoDescription}
               onChange={(e) => setPhotoDescription(e.target.value)}
               placeholder="Ej. Cambio de pastillas de freno delanteras y limpieza de discos."
-              className="mt-1 w-full resize-none rounded-xl border border-black/[0.1] bg-pure-white px-4 py-3 text-body outline-none placeholder:text-black/35 focus:border-notion-blue"
+              aria-label="Actividades realizadas"
+              className="mt-1 w-full resize-none bg-transparent text-body leading-relaxed outline-none placeholder:text-black/30"
             />
             {photoError && (
               <p role="alert" className="mt-2 text-body-sm text-vermillion">
                 {photoError}
               </p>
             )}
-            <div className="mt-4 space-y-3">
-              <button type="submit" disabled={uploading} className={primaryButtonClass}>
-                {uploading ? 'Subiendo…' : 'Guardar foto'}
-              </button>
-              <button type="button" onClick={closePendingPhoto} disabled={uploading} className={outlineButtonClass}>
-                Cancelar
-              </button>
-            </div>
           </form>
         )}
       </Sheet>
@@ -390,6 +397,7 @@ export default function OrderDetail() {
             </label>
             <button
               type="submit"
+              onPointerDown={(e) => e.preventDefault()}
               disabled={savingNote || !noteBody.trim()}
               aria-label="Guardar nota"
               className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ${
