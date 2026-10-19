@@ -1,14 +1,31 @@
-/* Tokens base de DESIGN.md (fase inicial; se ampliarán al elegir la librería de UI) */
-:root {
+@import 'tailwindcss';
+
+/* Tokens de DESIGN.md. Generan utilidades: bg-paper-warmth, text-graphite, bg-notion-blue, etc. */
+@theme {
   --color-notion-blue: #0075de;
   --color-paper-warmth: #f6f5f4;
   --color-pure-white: #ffffff;
+  --color-ink-black: #000000;
+  --color-charcoal: #111111;
+  --color-stone: #757575;
   --color-graphite: #615d59;
+  --color-slate: #696969;
+  --color-sky-tint: #e6f3fe;
+  --color-marigold: #ffb110;
+  --color-coral: #f64932;
+  --color-saffron: #e89d01;
+  --color-vermillion: #e32d14;
+  --color-mocha: #b18164;
+  --color-signal-blue: #097fe8;
+  --color-sky-wash: #62aef0;
+  --color-midnight-ink: #02093a;
+
+  /* Inter es el sustituto indicado en DESIGN.md; por ahora usa la fuente del sistema si no está instalada */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
-body {
-  margin: 0;
-  background: var(--color-paper-warmth);
-  color: #000;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+@layer base {
+  body {
+    @apply bg-paper-warmth text-ink-black font-sans antialiased;
+  }
 }
