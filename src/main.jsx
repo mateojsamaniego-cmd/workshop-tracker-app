@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fontsource-variable/inter' // Inter autoalojada (sustituto de NotionInter en DESIGN.md)
 import './index.css'
 import App from './App.jsx'
 

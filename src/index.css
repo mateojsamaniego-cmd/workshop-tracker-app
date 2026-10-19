@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Tokens de DESIGN.md. Generan utilidades: bg-paper-warmth, text-graphite, bg-notion-blue, etc. */
+/* Tokens de DESIGN.md. Generan utilidades: bg-paper-warmth, text-graphite, text-body-sm, etc. */
 @theme {
   --color-notion-blue: #0075de;
   --color-paper-warmth: #f6f5f4;
@@ -19,13 +19,36 @@
   --color-signal-blue: #097fe8;
   --color-sky-wash: #62aef0;
   --color-midnight-ink: #02093a;
+  --color-peach: #f6d5b8; /* píldora de resaltado del hero */
 
-  /* Inter es el sustituto indicado en DESIGN.md; por ahora usa la fuente del sistema si no está instalada */
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Escala tipográfica de DESIGN.md */
+  --text-caption: 12px;
+  --text-caption--line-height: 1.33;
+  --text-caption--letter-spacing: 0.01em;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.43;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-subheading: 20px;
+  --text-subheading--line-height: 1.27;
+  --text-heading-sm: 22px;
+  --text-heading-sm--line-height: 1.27;
+  --text-heading-sm--letter-spacing: -0.011em;
+  --text-heading: 40px;
+  --text-heading--line-height: 1.2;
+  --text-heading--letter-spacing: -0.036em;
+
+  /* Inter es el sustituto indicado en DESIGN.md para NotionInter */
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Movimiento: 200ms con "ease" */
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: ease;
 }
 
 @layer base {
   body {
-    @apply bg-paper-warmth text-ink-black font-sans antialiased;
+    @apply bg-paper-warmth font-sans text-body text-ink-black antialiased;
+    font-feature-settings: 'lnum';
   }
 }

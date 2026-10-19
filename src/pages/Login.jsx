@@ -3,9 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import LoadingScreen from '../components/LoadingScreen'
-
-const inputClass =
-  'mt-1 h-12 w-full rounded-lg border border-black/[0.15] bg-pure-white px-3 text-base outline-none transition-colors duration-200 focus:border-notion-blue'
+import { fieldClass, primaryButtonClass } from '../lib/styles'
 
 export default function Login() {
   const { session, loading } = useAuth()
@@ -38,53 +36,53 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-      <h1 className="text-3xl font-bold tracking-tight">Taller App</h1>
-      <p className="mt-1 text-graphite">Ingreso del personal</p>
+    <main className="flex min-h-screen flex-col bg-pure-white px-6">
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
+        {/* Marca: cuadrado con borde grueso, como el logo de Notion */}
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border-[2.5px] border-black/90 text-heading-sm font-bold">
+          T
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-6 rounded-xl border border-black/[0.08] bg-pure-white p-6"
-        noValidate
-      >
-        <label className="block text-sm font-medium" htmlFor="email">
-          Correo
+        <h1 className="mt-6 text-center text-heading-sm font-semibold text-black/90">
+          Tu taller, al día.
+          <span className="block text-black/40">Inicia sesión con tu cuenta del taller</span>
+        </h1>
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-3" noValidate>
           <input
-            id="email"
             type="email"
             autoComplete="email"
+            placeholder="Correo electrónico"
+            aria-label="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
           />
-        </label>
-
-        <label className="mt-4 block text-sm font-medium" htmlFor="password">
-          Contraseña
           <input
-            id="password"
             type="password"
             autoComplete="current-password"
+            placeholder="Contraseña"
+            aria-label="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
           />
-        </label>
 
-        {error && (
-          <p role="alert" className="mt-4 text-sm text-vermillion">
-            {error}
-          </p>
-        )}
+          {error && (
+            <p role="alert" className="text-center text-body-sm text-vermillion">
+              {error}
+            </p>
+          )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-6 h-12 w-full rounded-lg bg-notion-blue text-base font-medium text-white transition-colors duration-200 hover:bg-signal-blue disabled:opacity-60"
-        >
-          {submitting ? 'Ingresando…' : 'Ingresar'}
-        </button>
-      </form>
+          <button type="submit" disabled={submitting} className={primaryButtonClass}>
+            {submitting ? 'Ingresando…' : 'Continuar'}
+          </button>
+        </form>
+
+        <p className="mt-10 text-center text-body-sm text-black/40">
+          Las cuentas las crea el administrador del taller.
+        </p>
+      </div>
     </main>
   )
 }
